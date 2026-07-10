@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Biological vs Artificial Neuron - Drag & Drop</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:Arial,Helvetica,sans-serif;
+    background:linear-gradient(135deg,#4facfe,#00f2fe);
+    padding:20px;
+}
+
+h1{
+    text-align:center;
+    color:white;
+    margin-bottom:20px;
+}
+
+.instructions{
+    text-align:center;
+    color:white;
+    font-size:20px;
+    margin-bottom:20px;
+}
+
+.container{
+    display:flex;
+    justify-content:space-around;
+    flex-wrap:wrap;
+}
+
+.box{
+    width:42%;
+    min-height:420px;
+    background:white;
+    border-radius:15px;
+    padding:20px;
+    box-shadow:0 8px 20px rgba(0,0,0,.3);
+}
+
+.box h2{
+    text-align:center;
+    color:#0d47a1;
+    margin-bottom:15px;
+}
+
+.dropzone{
+    min-height:330px;
+    border:3px dashed #2196f3;
+    border-radius:10px;
+    padding:10px;
+}
+
+.cards{
+    margin-top:30px;
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:15px;
+}
+
+.card{
+    background:#ff9800;
+    color:white;
+    padding:12px 18px;
+    border-radius:10px;
+    cursor:grab;
+    font-weight:bold;
+    user-select:none;
+}
+
+.card:hover{
+    transform:scale(1.05);
+}
+
+.correct{
+    background:#4CAF50 !important;
+}
+
+.wrong{
+    background:#F44336 !important;
+}
+
+button{
+    display:block;
+    margin:25px auto;
+    padding:12px 30px;
+    font-size:18px;
+    border:none;
+    border-radius:8px;
+    background:#0d47a1;
+    color:white;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#1565c0;
+}
+
+#score{
+    text-align:center;
+    font-size:24px;
+    color:white;
+    margin-top:15px;
+}
+</style>
+
+</head>
+
+<body>
+
+<h1>🧠 Biological Neuron vs Artificial Neuron</h1>
+
+<div class="instructions">
+Drag each term into the correct column.
+</div>
+
+<div class="container">
+
+<div class="box">
+<h2>🧬 Biological Neuron</h2>
+
+<div class="dropzone"
+ondragover="allowDrop(event)"
+ondrop="drop(event,'bio')">
+</div>
+
+</div>
+
+<div class="box">
+<h2>🤖 Artificial Neuron</h2>
+
+<div class="dropzone"
+ondragover="allowDrop(event)"
+ondrop="drop(event,'ann')">
+</div>
+
+</div>
+
+</div>
+
+<div class="cards">
+
+<div class="card" draggable="true" id="Brain Cell">Brain Cell</div>
+
+<div class="card" draggable="true" id="Mathematical Model">Mathematical Model</div>
+
+<div class="card" draggable="true" id="Dendrites">Dendrites</div>
+
+<div class="card" draggable="true" id="Inputs">Inputs</div>
+
+<div class="card" draggable="true" id="Synapse">Synapse</div>
+
+<div class="card" draggable="true" id="Weights">Weights</div>
+
+<div class="card" draggable="true" id="Cell Body">Cell Body</div>
+
+<div class="card" draggable="true" id="Summation">Summation</div>
+
+<div class="card" draggable="true" id="Axon">Axon</div>
+
+<div class="card" draggable="true" id="Output">Output</div>
+
+<div class="card" draggable="true" id="Learning through Experience">Learning through Experience</div>
+
+<div class="card" draggable="true" id="Learning through Algorithms">Learning through Algorithms</div>
+
+</div>
+
+<button onclick="location.reload()">🔄 Reset Game</button>
+
+<div id="score">Score : 0 / 12</div>
+
+<script>
+
+let score=0;
+
+const answers={
+
+"Brain Cell":"bio",
+"Dendrites":"bio",
+"Synapse":"bio",
+"Cell Body":"bio",
+"Axon":"bio",
+"Learning through Experience":"bio",
+
+"Mathematical Model":"ann",
+"Inputs":"ann",
+"Weights":"ann",
+"Summation":"ann",
+"Output":"ann",
+"Learning through Algorithms":"ann"
+
+};
+
+document.querySelectorAll(".card").forEach(card=>{
+
+card.addEventListener("dragstart",drag);
+
+});
+
+function drag(e){
+
+e.dataTransfer.setData("text",e.target.id);
+
+}
+
+function allowDrop(e){
+
+e.preventDefault();
+
+}
+
+function drop(e,zone){
+
+e.preventDefault();
+
+let data=e.dataTransfer.getData("text");
+
+let card=document.getElementById(data);
+
+if(card.parentElement.classList.contains("dropzone"))
+return;
+
+if(answers[data]==zone){
+
+card.classList.add("correct");
+
+score++;
+
+document.getElementById("score").innerHTML="Score : "+score+" / 12";
+
+}else{
+
+card.classList.add("wrong");
+
+setTimeout(()=>{
+card.classList.remove("wrong");
+},800);
+
+}
+
+e.target.appendChild(card);
+
+if(score==12){
+
+setTimeout(()=>{
+
+alert("🎉 Congratulations!\nYou matched all terms correctly.");
+
+},300);
+
+}
+
+}
+
+</script>
+
+</body>
+</html>
