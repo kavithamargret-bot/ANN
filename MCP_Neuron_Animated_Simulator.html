@@ -1,0 +1,48 @@
+
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>MCP Simulator</title>
+<style>
+body{font-family:Arial;margin:20px;background:#eef} .box{padding:15px;border:1px solid #888;border-radius:8px;background:white;max-width:700px}
+.node{display:inline-block;width:60px;height:60px;border-radius:50%;background:#ccc;line-height:60px;text-align:center;margin:8px;transition:.4s}
+.active{background:#4caf50;color:#fff;box-shadow:0 0 15px #4caf50}
+#sum,#out{font-weight:bold}
+</style></head><body>
+<h2>🧠 Animated McCulloch–Pitts Neuron Simulator</h2>
+<div class="box">
+<label><input type="checkbox" id="x1"> x₁</label>
+<label><input type="checkbox" id="x2"> x₂</label>
+<label><input type="checkbox" id="x3"> x₃</label><br><br>
+Weights: w₁=<input id=w1 type=number value=1 style="width:50px">
+w₂=<input id=w2 type=number value=1 style="width:50px">
+w₃=<input id=w3 type=number value=1 style="width:50px"><br><br>
+Threshold θ=<input id=th type=number value=2 style="width:50px">
+<button onclick="runSim()">▶ Run</button>
+<hr>
+<div>
+<div id=n1 class=node>x₁</div>
+<div id=n2 class=node>x₂</div>
+<div id=n3 class=node>x₃</div>
+<div id=ns class=node>Σ</div>
+<div id=no class=node>Y</div>
+</div>
+<p id=sum>Weighted Sum:</p>
+<p id=out>Output:</p>
+</div>
+<script>
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+async function runSim(){
+['n1','n2','n3','ns','no'].forEach(i=>document.getElementById(i).className='node');
+let xs=[x1.checked?1:0,x2.checked?1:0,x3.checked?1:0];
+let ws=[+w1.value,+w2.value,+w3.value];
+let s=0;
+for(let i=0;i<3;i++){
+ if(xs[i]){let id='n'+(i+1);document.getElementById(id).classList.add('active');}
+ await sleep(400); s+=xs[i]*ws[i];
+}
+document.getElementById('ns').classList.add('active');
+sum.textContent='Weighted Sum = '+s;
+await sleep(600);
+let o=s>=+th.value?1:0;
+document.getElementById('no').classList.add('active');
+out.innerHTML=o?'<span style="color:green">Neuron Fires (Output=1)</span>':'<span style="color:red">Neuron Does Not Fire (Output=0)</span>';
+}
+</script></body></html>
