@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Activation Function Animation</title>
+
+<style>
+body{
+    font-family:Arial;
+    background:#f4f8ff;
+    text-align:center;
+}
+
+h1{
+    color:#0d47a1;
+}
+
+.container{
+    display:flex;
+    justify-content:center;
+    gap:20px;
+    margin-top:20px;
+}
+
+canvas{
+    background:white;
+    border:2px solid #333;
+}
+
+button{
+    padding:10px 20px;
+    margin:5px;
+    font-size:16px;
+    cursor:pointer;
+    border:none;
+    border-radius:8px;
+    background:#1976d2;
+    color:white;
+}
+
+button:hover{
+    background:#0d47a1;
+}
+
+.info{
+    margin-top:15px;
+    font-size:20px;
+    font-weight:bold;
+}
+</style>
+
+</head>
+<body>
+
+<h1>Activation Function Animation</h1>
+
+<div>
+
+<button onclick="func='step'">Step</button>
+
+<button onclick="func='sigmoid'">Sigmoid</button>
+
+<button onclick="func='tanh'">Tanh</button>
+
+<button onclick="func='relu'">ReLU</button>
+
+</div>
+
+<div class="container">
+
+<canvas id="graph" width="700" height="450"></canvas>
+
+</div>
+
+<div class="info">
+
+Input = <span id="xvalue"></span>
+
+&nbsp;&nbsp;&nbsp;
+
+Output = <span id="yvalue"></span>
+
+</div>
+
+<script>
+
+const canvas=document.getElementById("graph");
+const ctx=canvas.getContext("2d");
+
+let func="sigmoid";
+
+let x=-10;
+
+function activation(v){
+
+switch(func){
+
+case "step":
+return v>=0?1:0;
+
+case "sigmoid":
+return 1/(1+Math.exp(-v));
+
+case "tanh":
+return Math.tanh(v);
+
+case "relu":
+return Math.max(0,v);
+
+}
+
+}
+
+function drawAxes(){
+
+ctx.strokeStyle="#000";
+
+ctx.beginPath();
+
+ctx.moveTo(50,225);
+
+ctx.lineTo(650,225);
+
+ctx.stroke();
+
+ctx.beginPath();
+
+ctx.moveTo(350,20);
+
+ctx.lineTo(350,430);
+
+ctx.stroke();
+
+ctx.fillText("X",640,245);
+
+ctx.fillText("Y",360,25);
+
+}
+
+function drawGraph(){
+
+ctx.clearRect(0,0,700,450);
+
+drawAxes();
+
+ctx.beginPath();
+
+ctx.lineWidth=3;
+
+ctx.strokeStyle="red";
+
+for(let i=-10;i<=10;i+=0.05){
+
+let y=activation(i);
+
+let px=350+i*30;
+
+let py;
+
+if(func=="relu")
+
+py=225-y*20;
+
+else
+
+py=225-y*100;
+
+if(i==-10)
+
+ctx.moveTo(px,py);
+
+else
+
+ctx.lineTo(px,py);
+
+}
+
+ctx.stroke();
+
+let y=activation(x);
+
+let px=350+x*30;
+
+let py;
+
+if(func=="relu")
+
+py=225-y*20;
+
+else
+
+py=225-y*100;
+
+ctx.beginPath();
+
+ctx.fillStyle="blue";
+
+ctx.arc(px,py,8,0,2*Math.PI);
+
+ctx.fill();
+
+document.getElementById("xvalue").innerHTML=x.toFixed(2);
+
+document.getElementById("yvalue").innerHTML=y.toFixed(3);
+
+x+=0.05;
+
+if(x>10)x=-10;
+
+requestAnimationFrame(drawGraph);
+
+}
+
+drawGraph();
+
+</script>
+
+</body>
+</html>
