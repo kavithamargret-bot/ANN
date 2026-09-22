@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SOM Life Cycle - Arrange the Steps</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;font-family:Arial,sans-serif;
+  background:linear-gradient(135deg,#eef2ff,#f8fafc);
+  min-height:100vh;padding:20px;color:#1e293b
+}
+.container{
+  max-width:850px;margin:auto;background:#fff;border-radius:20px;
+  padding:28px;box-shadow:0 10px 35px rgba(0,0,0,.12)
+}
+h1{text-align:center;margin:0 0 8px}
+.subtitle{text-align:center;color:#64748b;margin-bottom:25px}
+.instructions{
+  background:#f1f5f9;padding:15px;border-radius:12px;
+  line-height:1.6;margin-bottom:22px
+}
+.steps{display:flex;flex-direction:column;gap:12px}
+.step{
+  padding:16px 18px;background:#f8fafc;border:2px solid #cbd5e1;
+  border-radius:12px;cursor:grab;font-weight:bold;
+  display:flex;align-items:center;gap:12px;
+  transition:.2s
+}
+.step:hover{border-color:#6366f1;background:#eef2ff}
+.step.dragging{opacity:.45}
+.number{
+  width:32px;height:32px;border-radius:50%;background:#4f46e5;
+  color:#fff;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0
+}
+.buttons{display:flex;gap:12px;margin-top:22px}
+button{
+  flex:1;padding:14px;border:0;border-radius:10px;
+  font-size:16px;font-weight:bold;cursor:pointer
+}
+#check{background:#4f46e5;color:white}
+#reset{background:#64748b;color:white}
+.feedback{
+  display:none;margin-top:20px;padding:18px;border-radius:12px;
+  line-height:1.6
+}
+.feedback.show{display:block}
+.correct{background:#dcfce7;border:2px solid #22c55e;color:#166534}
+.incorrect{background:#fee2e2;border:2px solid #ef4444;color:#991b1b}
+.answer{
+  margin-top:15px;background:white;border-radius:10px;padding:14px;
+  border:1px solid #cbd5e1;color:#334155
+}
+@media(max-width:600px){
+ .container{padding:18px}
+ .step{font-size:14px}
+ .buttons{flex-direction:column}
+}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>SOM Life Cycle Activity</h1>
+<div class="subtitle">Drag and drop the steps into the correct order.</div>
+
+<div class="instructions">
+<strong>Task:</strong> Arrange the Self-Organizing Map (SOM) training process
+from the beginning of learning to the formation of the final map.
+<br><br>
+<strong>Hint:</strong> The process begins with data and ends with an organized map.
+</div>
+
+<div id="steps" class="steps"></div>
+
+<div class="buttons">
+<button id="check" onclick="checkOrder()">Check Answer</button>
+<button id="reset" onclick="resetActivity()">Shuffle Again</button>
+</div>
+
+<div id="feedback" class="feedback"></div>
+</div>
+
+<script>
+const correctOrder = [
+ "Input Data",
+ "Distance Calculation",
+ "BMU Selection",
+ "Neighborhood Selection",
+ "Weight Update",
+ "Repeat",
+ "Final Map"
+];
+
+let steps = [...correctOrder];
+
+function shuffle(array){
+  for(let i=array.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [array[i],array[j]]=[array[j],array[i]];
+  }
+  return array;
+}
+
+function render(){
+  const box=document.getElementById("steps");
+  box.innerHTML="";
+  steps.forEach((text,index)=>{
+    const div=document.createElement("div");
+    div.className="step";
+    div.draggable=true;
+    div.dataset.value=text;
+    div.innerHTML='<span class="number">'+(index+1)+'</span><span>'+text+'</span>';
+
+    div.addEventListener("dragstart",()=>div.classList.add("dragging"));
+    div.addEventListener("dragend",()=>div.classList.remove("dragging"));
+    div.addEventListener("dragover",e=>e.preventDefault());
+    div.addEventListener("drop",e=>{
+      e.preventDefault();
+      const dragging=document.querySelector(".dragging");
+      if(!dragging || dragging===div)return;
+
+      const all=[...box.children];
+      const from=all.indexOf(dragging);
+      const to=all.indexOf(div);
+
+      if(from<to) box.insertBefore(dragging,div.nextSibling);
+      else box.insertBefore(dragging,div);
+
+      updateNumbers();
+    });
+    box.appendChild(div);
+  });
+}
+
+function updateNumbers(){
+  [...document.querySelectorAll(".step")].forEach((el,i)=>{
+    el.querySelector(".number").textContent=i+1;
+  });
+}
+
+function checkOrder(){
+  const current=[...document.querySelectorAll(".step")].map(x=>x.dataset.value);
+  const isCorrect=current.every((x,i)=>x===correctOrder[i]);
+  const feedback=document.getElementById("feedback");
+  feedback.className="feedback show";
+
+  if(isCorrect){
+    feedback.classList.add("correct");
+    feedback.innerHTML=
+      "<strong>✓ Correct!</strong><br><br>"+
+      "You have arranged the SOM life cycle correctly."+
+      '<div class="answer"><strong>Correct sequence:</strong><br>'+
+      "Input Data → Distance Calculation → BMU Selection → "+
+      "Neighborhood Selection → Weight Update → Repeat → Final Map</div>";
+  }else{
+    let count=0;
+    current.forEach((x,i)=>{if(x===correctOrder[i])count++;});
+    feedback.classList.add("incorrect");
+    feedback.innerHTML=
+      "<strong>Not quite.</strong><br><br>"+
+      "You placed <strong>"+count+" of 7</strong> steps in the correct position. "+
+      "Try rearranging the steps and check again.";
+  }
+}
+
+function resetActivity(){
+  steps=shuffle([...correctOrder]);
+  document.getElementById("feedback").className="feedback";
+  render();
+}
+
+resetActivity();
+</script>
+</body>
+</html>
