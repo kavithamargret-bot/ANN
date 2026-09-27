@@ -1,0 +1,1140 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>SOM Interactive Learning Application</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: linear-gradient(135deg, #eef2ff, #f8fafc);
+        color: #1e293b;
+    }
+
+    header {
+        background: linear-gradient(135deg, #312e81, #4f46e5);
+        color: white;
+        padding: 25px;
+        text-align: center;
+    }
+
+    header h1 {
+        margin: 0;
+        font-size: 30px;
+    }
+
+    header p {
+        margin: 8px 0 0;
+        font-size: 16px;
+    }
+
+    .container {
+        max-width: 1200px;
+        margin: 25px auto;
+        padding: 0 18px;
+    }
+
+    .card {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 5px 18px rgba(0,0,0,0.08);
+    }
+
+    .card h2 {
+        margin-top: 0;
+        color: #312e81;
+    }
+
+    .flow {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 15px;
+    }
+
+    .flow-box {
+        background: #eef2ff;
+        border: 2px solid #6366f1;
+        padding: 12px 16px;
+        border-radius: 10px;
+        font-weight: bold;
+        text-align: center;
+    }
+
+    .arrow {
+        font-size: 24px;
+        color: #4f46e5;
+    }
+
+    .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    button {
+        border: none;
+        padding: 12px 18px;
+        border-radius: 9px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 14px;
+        background: #4f46e5;
+        color: white;
+    }
+
+    button:hover {
+        opacity: 0.88;
+    }
+
+    button.reset {
+        background: #64748b;
+    }
+
+    button.step {
+        background: #059669;
+    }
+
+    .status {
+        background: #f1f5f9;
+        border-left: 5px solid #4f46e5;
+        padding: 15px;
+        margin-top: 15px;
+        border-radius: 8px;
+        line-height: 1.6;
+    }
+
+    .main-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    canvas {
+        width: 100%;
+        max-width: 520px;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        background: white;
+        display: block;
+        margin: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 12px;
+    }
+
+    th, td {
+        border: 1px solid #cbd5e1;
+        padding: 10px;
+        text-align: center;
+    }
+
+    th {
+        background: #eef2ff;
+        color: #312e81;
+    }
+
+    .bmu {
+        background: #fde68a !important;
+        font-weight: bold;
+    }
+
+    .neighbor {
+        background: #dcfce7 !important;
+    }
+
+    .weight-table td {
+        font-family: monospace;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+    }
+
+    .info-box {
+        background: #f8fafc;
+        padding: 15px;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        text-align: center;
+    }
+
+    .info-box strong {
+        display: block;
+        font-size: 22px;
+        color: #4f46e5;
+        margin-top: 5px;
+    }
+
+    .formula {
+        background: #0f172a;
+        color: white;
+        padding: 15px;
+        border-radius: 10px;
+        text-align: center;
+        font-size: 18px;
+        margin-top: 10px;
+    }
+
+    @media(max-width: 800px) {
+        .main-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .info-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        header h1 {
+            font-size: 24px;
+        }
+    }
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>Self-Organizing Map (SOM)</h1>
+    <p>Interactive Visualization of SOM Training</p>
+</header>
+
+<div class="container">
+
+    <!-- SOM FLOW -->
+    <div class="card">
+        <h2>🧠 SOM Learning Flow</h2>
+
+        <div class="flow">
+            <div class="flow-box">Input Data</div>
+            <div class="arrow">→</div>
+            <div class="flow-box">Calculate Distance</div>
+            <div class="arrow">→</div>
+            <div class="flow-box">Find BMU</div>
+            <div class="arrow">→</div>
+            <div class="flow-box">Update BMU + Neighbors</div>
+            <div class="arrow">→</div>
+            <div class="flow-box">Organized Map</div>
+        </div>
+    </div>
+
+
+    <!-- CONTROLS -->
+    <div class="card">
+
+        <h2>🎮 SOM Training Controls</h2>
+
+        <div class="info-grid">
+
+            <div class="info-box">
+                Epoch
+                <strong id="epochDisplay">0</strong>
+            </div>
+
+            <div class="info-box">
+                Input
+                <strong id="inputDisplay">-</strong>
+            </div>
+
+            <div class="info-box">
+                BMU
+                <strong id="bmuDisplay">-</strong>
+            </div>
+
+            <div class="info-box">
+                Learning Rate
+                <strong id="lrDisplay">0.500</strong>
+            </div>
+
+        </div>
+
+        <div class="controls">
+
+            <button onclick="startTraining()">
+                ▶ Start Training
+            </button>
+
+            <button class="step" onclick="singleStep()">
+                ⏭ Single Step
+            </button>
+
+            <button class="reset" onclick="resetSOM()">
+                ↻ Reset
+            </button>
+
+        </div>
+
+        <div class="status" id="status">
+            Click <b>Single Step</b> to observe the SOM learning process.
+        </div>
+
+    </div>
+
+
+    <!-- VISUALIZATION -->
+    <div class="main-grid">
+
+        <div class="card">
+
+            <h2>📊 SOM Visualization</h2>
+
+            <canvas id="somCanvas" width="520" height="520"></canvas>
+
+            <p style="text-align:center;">
+                <b>Blue points:</b> Input Data &nbsp;&nbsp;
+                <b>Squares:</b> SOM Neurons
+            </p>
+
+        </div>
+
+
+        <!-- DISTANCE MATRIX -->
+        <div class="card">
+
+            <h2>📏 Distance Matrix</h2>
+
+            <p>
+                Euclidean distance between the current input vector
+                and each SOM neuron.
+            </p>
+
+            <div id="distanceTable"></div>
+
+        </div>
+
+    </div>
+
+
+    <!-- WEIGHTS -->
+    <div class="card">
+
+        <h2>⚖️ Current SOM Weights</h2>
+
+        <div id="weightTable"></div>
+
+    </div>
+
+
+    <!-- FORMULA -->
+    <div class="card">
+
+        <h2>📐 SOM Weight Update Rule</h2>
+
+        <div class="formula">
+
+            W<sub>new</sub> =
+            W<sub>old</sub> +
+            α × (X − W<sub>old</sub>)
+
+        </div>
+
+        <p>
+            <b>W</b> = neuron weight vector
+            <br>
+            <b>X</b> = input vector
+            <br>
+            <b>α</b> = learning rate
+        </p>
+
+    </div>
+
+
+    <!-- EXPLANATION -->
+    <div class="card">
+
+        <h2>📚 What is happening?</h2>
+
+        <ol>
+
+            <li>
+                An input vector is selected from the dataset.
+            </li>
+
+            <li>
+                The Euclidean distance between the input and
+                every SOM neuron is calculated.
+            </li>
+
+            <li>
+                The neuron having the smallest distance becomes
+                the <b>Best Matching Unit (BMU)</b>.
+            </li>
+
+            <li>
+                The BMU and its neighboring neurons are identified.
+            </li>
+
+            <li>
+                The weights of the BMU and neighbors are moved
+                closer to the input vector.
+            </li>
+
+            <li>
+                The process is repeated for several epochs.
+            </li>
+
+            <li>
+                Eventually, similar input patterns become organized
+                near each other on the SOM.
+            </li>
+
+        </ol>
+
+    </div>
+
+</div>
+
+
+<script>
+
+// ============================================================
+// STEP 1: SAMPLE DATASET
+// ============================================================
+
+const data = [
+
+    [0.1, 0.8],
+    [0.3, 0.7],
+    [0.2, 0.9],
+    [0.8, 0.2],
+    [0.9, 0.1],
+    [0.75, 0.25]
+
+];
+
+
+// ============================================================
+// STEP 2: SOM PARAMETERS
+// ============================================================
+
+const rows = 2;
+const cols = 2;
+
+const initialLearningRate = 0.5;
+
+const radius = 1;
+
+const epochs = 100;
+
+
+// ============================================================
+// SOM VARIABLES
+// ============================================================
+
+let weights = [];
+
+let currentEpoch = 0;
+
+let currentDataIndex = 0;
+
+let currentInput = null;
+
+let currentBMU = null;
+
+let distances = [];
+
+let trainingTimer = null;
+
+
+// ============================================================
+// RANDOM WEIGHT INITIALIZATION
+// ============================================================
+
+function initializeWeights() {
+
+    weights = [];
+
+    // Equivalent to NumPy random initialization
+
+    // The values are generated using JavaScript Math.random()
+
+    for(let i = 0; i < rows; i++) {
+
+        weights[i] = [];
+
+        for(let j = 0; j < cols; j++) {
+
+            weights[i][j] = [
+
+                Math.random(),
+
+                Math.random()
+
+            ];
+
+        }
+
+    }
+
+}
+
+
+// ============================================================
+// EUCLIDEAN DISTANCE
+// ============================================================
+
+function euclideanDistance(a, b) {
+
+    const dx = a[0] - b[0];
+
+    const dy = a[1] - b[1];
+
+    return Math.sqrt(
+        dx * dx +
+        dy * dy
+    );
+
+}
+
+
+// ============================================================
+// FIND BMU
+// ============================================================
+
+function findBMU(input) {
+
+    let minDistance = Infinity;
+
+    let bmu = [0, 0];
+
+    distances = [];
+
+    for(let i = 0; i < rows; i++) {
+
+        distances[i] = [];
+
+        for(let j = 0; j < cols; j++) {
+
+            const d = euclideanDistance(
+                input,
+                weights[i][j]
+            );
+
+            distances[i][j] = d;
+
+            if(d < minDistance) {
+
+                minDistance = d;
+
+                bmu = [i, j];
+
+            }
+
+        }
+
+    }
+
+    return bmu;
+
+}
+
+
+// ============================================================
+// UPDATE WEIGHTS
+// ============================================================
+
+function updateWeights(input, bmu, learningRate) {
+
+    for(let i = 0; i < rows; i++) {
+
+        for(let j = 0; j < cols; j++) {
+
+            // Distance on SOM grid
+
+            const gridDistance = Math.sqrt(
+
+                Math.pow(i - bmu[0], 2) +
+
+                Math.pow(j - bmu[1], 2)
+
+            );
+
+
+            // Update BMU and neighbors
+
+            if(gridDistance <= radius) {
+
+                weights[i][j][0] +=
+
+                    learningRate *
+
+                    (input[0] - weights[i][j][0]);
+
+
+                weights[i][j][1] +=
+
+                    learningRate *
+
+                    (input[1] - weights[i][j][1]);
+
+            }
+
+        }
+
+    }
+
+}
+
+
+// ============================================================
+// SINGLE TRAINING STEP
+// ============================================================
+
+function singleStep() {
+
+    if(currentEpoch >= epochs) {
+
+        document.getElementById("status").innerHTML =
+            "<b>Training completed!</b> The SOM has completed 100 epochs.";
+
+        return;
+
+    }
+
+
+    currentInput = data[currentDataIndex];
+
+
+    // Calculate current learning rate
+
+    const learningRate =
+
+        initialLearningRate *
+
+        (1 - currentEpoch / epochs);
+
+
+    // Find BMU
+
+    currentBMU = findBMU(currentInput);
+
+
+    // Update weights
+
+    updateWeights(
+        currentInput,
+        currentBMU,
+        learningRate
+    );
+
+
+    // Display information
+
+    document.getElementById("epochDisplay").textContent =
+        currentEpoch + 1;
+
+
+    document.getElementById("inputDisplay").textContent =
+        `[${currentInput[0]}, ${currentInput[1]}]`;
+
+
+    document.getElementById("bmuDisplay").textContent =
+        `(${currentBMU[0]},${currentBMU[1]})`;
+
+
+    document.getElementById("lrDisplay").textContent =
+        learningRate.toFixed(3);
+
+
+    document.getElementById("status").innerHTML =
+
+        `<b>Step ${currentDataIndex + 1}</b><br>
+
+        Input Vector:
+        [${currentInput[0]}, ${currentInput[1]}]
+
+        <br>
+
+        Best Matching Unit:
+        <b>(${currentBMU[0]}, ${currentBMU[1]})</b>
+
+        <br>
+
+        The BMU and its neighbors were updated.`;
+
+
+    // Move to next input
+
+    currentDataIndex++;
+
+
+    if(currentDataIndex >= data.length) {
+
+        currentDataIndex = 0;
+
+        currentEpoch++;
+
+    }
+
+
+    drawSOM();
+
+    displayDistances();
+
+    displayWeights();
+
+}
+
+
+// ============================================================
+// START TRAINING
+// ============================================================
+
+function startTraining() {
+
+    if(trainingTimer !== null) {
+
+        return;
+
+    }
+
+
+    trainingTimer = setInterval(function() {
+
+        singleStep();
+
+        if(currentEpoch >= epochs) {
+
+            clearInterval(trainingTimer);
+
+            trainingTimer = null;
+
+        }
+
+    }, 100);
+
+}
+
+
+// ============================================================
+// RESET SOM
+// ============================================================
+
+function resetSOM() {
+
+    if(trainingTimer !== null) {
+
+        clearInterval(trainingTimer);
+
+        trainingTimer = null;
+
+    }
+
+
+    currentEpoch = 0;
+
+    currentDataIndex = 0;
+
+    currentInput = null;
+
+    currentBMU = null;
+
+    distances = [];
+
+
+    initializeWeights();
+
+
+    document.getElementById("epochDisplay").textContent = "0";
+
+    document.getElementById("inputDisplay").textContent = "-";
+
+    document.getElementById("bmuDisplay").textContent = "-";
+
+    document.getElementById("lrDisplay").textContent = "0.500";
+
+
+    document.getElementById("status").innerHTML =
+
+        "SOM has been reset. Click <b>Single Step</b> to begin.";
+
+
+    drawSOM();
+
+    displayDistances();
+
+    displayWeights();
+
+}
+
+
+// ============================================================
+// DRAW SOM
+// ============================================================
+
+function drawSOM() {
+
+    const canvas =
+        document.getElementById("somCanvas");
+
+    const ctx =
+        canvas.getContext("2d");
+
+
+    ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+
+    // Coordinate conversion
+
+    function mapX(x) {
+
+        return 50 + x * 420;
+
+    }
+
+
+    function mapY(y) {
+
+        return 470 - y * 420;
+
+    }
+
+
+    // Draw axes
+
+    ctx.strokeStyle = "#94a3b8";
+
+    ctx.lineWidth = 1;
+
+    ctx.beginPath();
+
+    ctx.moveTo(50, 470);
+
+    ctx.lineTo(470, 470);
+
+    ctx.moveTo(50, 470);
+
+    ctx.lineTo(50, 50);
+
+    ctx.stroke();
+
+
+    // Draw grid lines
+
+    for(let i = 0; i <= 10; i++) {
+
+        const x = 50 + i * 42;
+
+        const y = 470 - i * 42;
+
+        ctx.strokeStyle = "#e2e8f0";
+
+        ctx.beginPath();
+
+        ctx.moveTo(x, 50);
+
+        ctx.lineTo(x, 470);
+
+        ctx.stroke();
+
+        ctx.beginPath();
+
+        ctx.moveTo(50, y);
+
+        ctx.lineTo(470, y);
+
+        ctx.stroke();
+
+    }
+
+
+    // Draw input data
+
+    data.forEach(point => {
+
+        const x = mapX(point[0]);
+
+        const y = mapY(point[1]);
+
+
+        ctx.beginPath();
+
+        ctx.arc(
+            x,
+            y,
+            7,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fillStyle = "#2563eb";
+
+        ctx.fill();
+
+
+        ctx.fillStyle = "#1e293b";
+
+        ctx.font = "12px Arial";
+
+        ctx.fillText(
+            `(${point[0]},${point[1]})`,
+            x + 8,
+            y - 8
+        );
+
+    });
+
+
+    // Draw SOM neurons
+
+    for(let i = 0; i < rows; i++) {
+
+        for(let j = 0; j < cols; j++) {
+
+            const neuron = weights[i][j];
+
+            const x = mapX(neuron[0]);
+
+            const y = mapY(neuron[1]);
+
+
+            let isBMU =
+
+                currentBMU !== null &&
+
+                currentBMU[0] === i &&
+
+                currentBMU[1] === j;
+
+
+            // Draw BMU
+
+            ctx.fillStyle =
+                isBMU ? "#dc2626" : "#16a34a";
+
+
+            ctx.fillRect(
+                x - 8,
+                y - 8,
+                16,
+                16
+            );
+
+
+            ctx.strokeStyle = "#0f172a";
+
+            ctx.strokeRect(
+                x - 8,
+                y - 8,
+                16,
+                16
+            );
+
+
+            // Label neuron
+
+            ctx.fillStyle = "#0f172a";
+
+            ctx.font = "bold 13px Arial";
+
+            ctx.fillText(
+                `(${i},${j})`,
+                x + 10,
+                y + 5
+            );
+
+        }
+
+    }
+
+
+    // Draw title
+
+    ctx.fillStyle = "#312e81";
+
+    ctx.font = "bold 16px Arial";
+
+    ctx.fillText(
+        "Input Space and SOM Neurons",
+        145,
+        25
+    );
+
+}
+
+
+// ============================================================
+// DISPLAY DISTANCES
+// ============================================================
+
+function displayDistances() {
+
+    let html = `
+
+        <table>
+
+            <tr>
+                <th></th>
+                <th>Neuron (0,0)</th>
+                <th>Neuron (0,1)</th>
+            </tr>
+
+            <tr>
+                <th>Row 0</th>
+
+                <td>${getDistance(0,0)}</td>
+
+                <td>${getDistance(0,1)}</td>
+
+            </tr>
+
+            <tr>
+                <th>Row 1</th>
+
+                <td>${getDistance(1,0)}</td>
+
+                <td>${getDistance(1,1)}</td>
+
+            </tr>
+
+        </table>
+    `;
+
+
+    document.getElementById(
+        "distanceTable"
+    ).innerHTML = html;
+
+}
+
+
+function getDistance(i,j) {
+
+    if(!distances.length) {
+
+        return "-";
+
+    }
+
+
+    return distances[i][j].toFixed(4);
+
+}
+
+
+// ============================================================
+// DISPLAY WEIGHTS
+// ============================================================
+
+function displayWeights() {
+
+    let html = `
+
+        <table class="weight-table">
+
+            <tr>
+
+                <th>Neuron</th>
+
+                <th>Feature 1</th>
+
+                <th>Feature 2</th>
+
+                <th>Status</th>
+
+            </tr>
+
+    `;
+
+
+    for(let i = 0; i < rows; i++) {
+
+        for(let j = 0; j < cols; j++) {
+
+            let className = "";
+
+            let status = "Neuron";
+
+
+            if(
+
+                currentBMU &&
+
+                currentBMU[0] === i &&
+
+                currentBMU[1] === j
+
+            ) {
+
+                className = "bmu";
+
+                status = "⭐ BMU";
+
+            }
+
+
+            html += `
+
+                <tr class="${className}">
+
+                    <td>(${i},${j})</td>
+
+                    <td>
+                        ${weights[i][j][0].toFixed(4)}
+                    </td>
+
+                    <td>
+                        ${weights[i][j][1].toFixed(4)}
+                    </td>
+
+                    <td>${status}</td>
+
+                </tr>
+
+            `;
+
+        }
+
+    }
+
+
+    html += "</table>";
+
+
+    document.getElementById(
+        "weightTable"
+    ).innerHTML = html;
+
+}
+
+
+// ============================================================
+// INITIALIZE APPLICATION
+// ============================================================
+
+initializeWeights();
+
+drawSOM();
+
+displayDistances();
+
+displayWeights();
+
+</script>
+
+</body>
+</html>
+```
