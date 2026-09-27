@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interactive Gradient Descent Activity</title>
+<style>
+body{font-family:Arial,sans-serif;margin:0;background:#f4f7fb;color:#172033}
+.container{max-width:1100px;margin:20px auto;padding:20px}
+h1{text-align:center;margin-bottom:8px}
+.subtitle{text-align:center;color:#5b6575;margin-bottom:20px}
+.grid{display:grid;grid-template-columns:340px 1fr;gap:20px}
+.card{background:white;border-radius:14px;padding:18px;box-shadow:0 3px 14px rgba(0,0,0,.08)}
+label{display:block;margin-top:14px;font-weight:bold}
+input[type=range]{width:100%;margin:8px 0}
+.value{font-weight:bold}
+button{border:0;border-radius:9px;padding:12px 16px;margin:8px 5px 0 0;cursor:pointer;font-weight:bold;background:#2563eb;color:white}
+button.secondary{background:#64748b}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:15px}
+.stat{background:#eef4ff;border-radius:10px;padding:10px;text-align:center}
+.stat small{display:block;color:#667085}.stat strong{font-size:20px}
+canvas{width:100%;height:390px;border:1px solid #d8dee9;border-radius:10px;background:white}
+.explain{margin-top:15px;padding:14px;background:#f1f5f9;border-radius:10px;line-height:1.5}
+.formula{background:#111827;color:white;padding:12px;border-radius:10px;font-family:monospace;margin-top:12px;overflow:auto}
+.activity{margin-top:20px}
+li{margin:8px 0}
+@media(max-width:750px){.grid{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>🎯 Interactive Gradient Descent Activity</h1>
+<p class="subtitle">Train a linear model to learn the relationship y = 2x</p>
+
+<div class="grid">
+<div class="card">
+<h2>1. Control the Model</h2>
+
+<label>Weight (w): <span id="wVal" class="value">0.00</span></label>
+<input id="w" type="range" min="-1" max="3" step="0.01" value="0">
+
+<label>Bias (b): <span id="bVal" class="value">0.00</span></label>
+<input id="b" type="range" min="-5" max="5" step="0.01" value="0">
+
+<label>Learning Rate (α): <span id="lrVal" class="value">0.010</span></label>
+<input id="lr" type="range" min="0.001" max="0.1" step="0.001" value="0.01">
+
+<button id="step">One Gradient Step</button>
+<button id="train">Train 20 Steps</button>
+<button id="reset" class="secondary">Reset</button>
+
+<div class="stats">
+<div class="stat"><small>Loss</small><strong id="loss">44.000</strong></div>
+<div class="stat"><small>dw</small><strong id="dw">-44.000</strong></div>
+<div class="stat"><small>db</small><strong id="db">-6.000</strong></div>
+</div>
+
+<div class="formula">
+y_pred = wx + b<br><br>
+dw = (-2/n) Σ[x(y - y_pred)]<br>
+db = (-2/n) Σ(y - y_pred)<br><br>
+w = w - α(dw)<br>
+b = b - α(db)
+</div>
+</div>
+
+<div class="card">
+<h2>2. Watch the Prediction Line</h2>
+<canvas id="plot" width="720" height="420"></canvas>
+
+<div class="explain">
+<strong>What is happening?</strong>
+<p id="message">At w = 0 and b = 0, every prediction is 0. The errors are large, so the gradient tells the model to increase the weight.</p>
+</div>
+</div>
+</div>
+
+<div class="card activity">
+<h2>3. Student Activity</h2>
+<ol>
+<li>Start with <b>w = 0</b> and <b>b = 0</b>. What are the predictions?</li>
+<li>Click <b>One Gradient Step</b>. What happens to the weight and loss?</li>
+<li>Observe the value of <b>dw</b>. Is it positive or negative?</li>
+<li>Click <b>Train 20 Steps</b>. Does the prediction line move closer to the data?</li>
+<li>Increase the learning rate. What happens?</li>
+<li>Set the learning rate very small. What happens to learning?</li>
+<li>Try to obtain a model close to <b>y = 2x</b>.</li>
+</ol>
+<p><b>Learning goal:</b> Understand that the gradient tells the model the direction of change, while the learning rate controls the size of the change.</p>
+</div>
+</div>
+
+<script>
+const X=[1,2,3,4,5];
+const Y=[2,4,6,8,10];
+
+const w=document.getElementById("w");
+const b=document.getElementById("b");
+const lr=document.getElementById("lr");
+const wVal=document.getElementById("wVal");
+const bVal=document.getElementById("bVal");
+const lrVal=document.getElementById("lrVal");
+const lossEl=document.getElementById("loss");
+const dwEl=document.getElementById("dw");
+const dbEl=document.getElementById("db");
+const message=document.getElementById("message");
+const canvas=document.getElementById("plot");
+const ctx=canvas.getContext("2d");
+
+function calculate(){
+    const W=Number(w.value);
+    const B=Number(b.value);
+    const A=Number(lr.value);
+    const predictions=X.map(x=>W*x+B);
+    const errors=Y.map((y,i)=>y-predictions[i]);
+    const loss=errors.reduce((s,e)=>s+e*e,0)/X.length;
+    const dw=(-2/X.length)*X.reduce((s,x,i)=>s+x*errors[i],0);
+    const db=(-2/X.length)*errors.reduce((s,e)=>s+e,0);
+    return {W,B,A,predictions,errors,loss,dw,db};
+}
+
+function mapX(x){return 70+(x/5)*590}
+function mapY(y){return 370-(y/11)*330}
+
+function draw(){
+    const q=calculate();
+
+    wVal.textContent=q.W.toFixed(2);
+    bVal.textContent=q.B.toFixed(2);
+    lrVal.textContent=q.A.toFixed(3);
+    lossEl.textContent=q.loss.toFixed(3);
+    dwEl.textContent=q.dw.toFixed(3);
+    dbEl.textContent=q.db.toFixed(3);
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    // axes
+    ctx.strokeStyle="#9aa4b2";
+    ctx.lineWidth=1;
+    ctx.beginPath();
+    ctx.moveTo(70,370);ctx.lineTo(660,370);
+    ctx.moveTo(70,370);ctx.lineTo(70,40);
+    ctx.stroke();
+
+    // grid
+    ctx.strokeStyle="#e5e7eb";
+    for(let x=1;x<=5;x++){
+        ctx.beginPath();ctx.moveTo(mapX(x),40);ctx.lineTo(mapX(x),370);ctx.stroke();
+    }
+    for(let y=2;y<=10;y+=2){
+        ctx.beginPath();ctx.moveTo(70,mapY(y));ctx.lineTo(660,mapY(y));ctx.stroke();
+    }
+
+    // labels
+    ctx.fillStyle="#374151";
+    ctx.font="13px Arial";
+    for(let x=1;x<=5;x++) ctx.fillText(x,mapX(x)-4,390);
+    for(let y=2;y<=10;y+=2) ctx.fillText(y,45,mapY(y)+4);
+    ctx.fillText("X",665,390);
+    ctx.fillText("Y",45,35);
+
+    // target points
+    ctx.fillStyle="#dc2626";
+    X.forEach((x,i)=>{
+        ctx.beginPath();
+        ctx.arc(mapX(x),mapY(Y[i]),7,0,Math.PI*2);
+        ctx.fill();
+    });
+
+    // target line y=2x
+    ctx.strokeStyle="#dc2626";
+    ctx.setLineDash([7,5]);
+    ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.moveTo(mapX(1),mapY(2));
+    ctx.lineTo(mapX(5),mapY(10));
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // prediction line
+    ctx.strokeStyle="#2563eb";
+    ctx.lineWidth=4;
+    ctx.beginPath();
+    ctx.moveTo(mapX(1),mapY(q.W+q.B));
+    ctx.lineTo(mapX(5),mapY(q.W*5+q.B));
+    ctx.stroke();
+
+    // legend
+    ctx.fillStyle="#dc2626";ctx.fillRect(90,50,14,4);
+    ctx.fillStyle="#374151";ctx.fillText("Target: y = 2x",112,55);
+    ctx.fillStyle="#2563eb";ctx.fillRect(250,50,14,4);
+    ctx.fillStyle="#374151";ctx.fillText("Prediction: y = wx + b",272,55);
+
+    if(q.dw<0){
+        message.textContent="dw is negative, so gradient descent increases w. The blue prediction line moves upward toward the target line.";
+    }else if(q.dw>0){
+        message.textContent="dw is positive, so gradient descent decreases w. The blue prediction line moves downward to reduce the error.";
+    }else{
+        message.textContent="dw is close to zero. The current weight is close to the loss-minimizing value.";
+    }
+}
+
+function gradientStep(){
+    const q=calculate();
+    w.value=Math.max(-1,Math.min(3,q.W-q.A*q.dw));
+    b.value=Math.max(-5,Math.min(5,q.B-q.A*q.db));
+    draw();
+}
+
+document.getElementById("step").addEventListener("click",gradientStep);
+
+document.getElementById("train").addEventListener("click",()=>{
+    for(let i=0;i<20;i++) gradientStep();
+});
+
+document.getElementById("reset").addEventListener("click",()=>{
+    w.value=0;b.value=0;lr.value=0.01;draw();
+});
+
+[w,b,lr].forEach(el=>el.addEventListener("input",draw));
+
+draw();
+</script>
+</body>
+</html>
