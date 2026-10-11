@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Competitive Learning Simulator</title>
+<style>
+  :root { font-family: Arial, sans-serif; color: #182230; background: #f4f7fb; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 22px; }
+  .wrap { max-width: 1100px; margin: auto; }
+  h1 { margin: 0 0 8px; font-size: clamp(1.5rem, 3vw, 2.2rem); }
+  .sub { color: #536174; margin: 0 0 20px; line-height: 1.5; }
+  .layout { display: grid; grid-template-columns: 300px 1fr; gap: 18px; }
+  .panel { background: white; border: 1px solid #dce4ee; border-radius: 14px; padding: 18px; box-shadow: 0 3px 12px #2030400a; }
+  h2 { font-size: 1.05rem; margin: 0 0 14px; }
+  label { display: block; font-weight: 600; font-size: .9rem; margin: 13px 0 6px; }
+  input, textarea, select, button { font: inherit; }
+  input[type=number], textarea { width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 9px; background: #fff; color: #182230; }
+  textarea { min-height: 105px; resize: vertical; font-family: ui-monospace, monospace; font-size: .86rem; }
+  input[type=range] { width: 100%; }
+  .range-line { display: flex; justify-content: space-between; color: #536174; font-size: .85rem; }
+  .buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  button { border: 0; border-radius: 9px; padding: 10px 13px; cursor: pointer; font-weight: 700; }
+  button.primary { background: #2458d3; color: white; }
+  button.secondary { background: #eaf0f8; color: #23334a; }
+  button:focus-visible { outline: 3px solid #9bbcff; outline-offset: 2px; }
+  .right { display: grid; gap: 18px; }
+  canvas { width: 100%; height: 390px; display: block; border: 1px solid #e0e7ef; border-radius: 10px; background: #fff; }
+  .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .metric { background: #f7f9fc; border: 1px solid #e3eaf2; padding: 12px; border-radius: 10px; }
+  .metric .k { color: #617084; font-size: .8rem; }
+  .metric .v { font-weight: 700; font-size: 1.05rem; margin-top: 5px; overflow-wrap: anywhere; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; color: #536174; font-size: .86rem; margin: 10px 0 0; }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; }
+  .log { max-height: 220px; overflow: auto; font-size: .86rem; }
+  table { border-collapse: collapse; width: 100%; font-size: .85rem; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #e5ebf2; }
+  th { color: #536174; }
+  .status { padding: 10px 12px; border-radius: 9px; background: #eef5ff; color: #214b95; line-height: 1.45; font-size: .9rem; }
+  .hint { font-size: .84rem; color: #617084; line-height: 1.5; }
+  @media (max-width: 800px) { body { padding: 12px; } .layout { grid-template-columns: 1fr; } canvas { height: 320px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Competitive Learning Simulator</h1>
+  <p class="sub">Explore unsupervised learning: each input competes for the closest neuron, and only the winner updates its weights.</p>
+  <div class="layout">
+    <section class="panel">
+      <h2>Training settings</h2>
+      <label for="points">Input points (x, y), one per line</label>
+      <textarea id="points">1, 2
+1.5, 1.8
+5, 8
+6, 9</textarea>
+      <p class="hint">Use comma-separated numbers. Example: <code>1, 2</code></p>
+      <label for="w0x">Neuron 1 initial weight — X</label>
+      <input id="w0x" type="number" step="0.1" value="2">
+      <label for="w0y">Neuron 1 initial weight — Y</label>
+      <input id="w0y" type="number" step="0.1" value="2">
+      <label for="w1x">Neuron 2 initial weight — X</label>
+      <input id="w1x" type="number" step="0.1" value="6">
+      <label for="w1y">Neuron 2 initial weight — Y</label>
+      <input id="w1y" type="number" step="0.1" value="8">
+      <label for="alpha">Learning rate (α)</label>
+      <input id="alpha" type="range" min="0.05" max="1" step="0.05" value="0.5">
+      <div class="range-line"><span>0.05</span><strong id="alphaVal">0.50</strong><span>1.00</span></div>
+      <label for="epochs">Epochs</label>
+      <input id="epochs" type="number" min="1" max="50" value="5">
+      <div class="buttons">
+        <button class="primary" id="train">Train network</button>
+        <button class="secondary" id="step">Next input</button>
+        <button class="secondary" id="reset">Reset</button>
+      </div>
+      <p class="hint">Train network runs through every point for the selected number of epochs. “Next input” advances one input at a time after reset.</p>
+    </section>
+
+    <div class="right">
+      <section class="panel">
+        <h2>Input space and neuron weights</h2>
+        <canvas id="plot" width="760" height="390" aria-label="Scatter plot of inputs and neuron weights"></canvas>
+        <div class="legend">
+          <span><i class="dot" style="background:#2458d3"></i>Input points</span>
+          <span><i class="dot" style="background:#e05252"></i>Neuron 1 weights</span>
+          <span><i class="dot" style="background:#15966b"></i>Neuron 2 weights</span>
+          <span>Dashed line connects current input to its winner</span>
+        </div>
+      </section>
+      <section class="panel">
+        <h2>Current training state</h2>
+        <div class="metrics">
+          <div class="metric"><div class="k">Epoch</div><div class="v" id="epochOut">0</div></div>
+          <div class="metric"><div class="k">Current input</div><div class="v" id="inputOut">—</div></div>
+          <div class="metric"><div class="k">Winning neuron</div><div class="v" id="winnerOut">—</div></div>
+        </div>
+        <div style="height:12px"></div>
+        <div class="status" id="status" role="status">Ready. Click “Train network” to begin.</div>
+        <div style="height:12px"></div>
+        <table>
+          <thead><tr><th>Neuron</th><th>Current weights</th><th>Distance to input</th><th>Wins</th></tr></thead>
+          <tbody id="weightsTable">
+            <tr><td>1</td><td>(2.00, 2.00)</td><td>—</td><td>0</td></tr>
+            <tr><td>2</td><td>(6.00, 8.00)</td><td>—</td><td>0</td></tr>
+          </tbody>
+        </table>
+      </section>
+      <section class="panel">
+        <h2>Training log</h2>
+        <div class="log" id="log">No training steps yet.</div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const canvas = $('plot'), ctx = canvas.getContext('2d');
+  let X = [], weights = [], wins = [0, 0], epoch = 0, index = 0;
+  let last = null, running = false, logRows = [];
+
+  $('alpha').addEventListener('input', () => $('alphaVal').textContent = Number($('alpha').value).toFixed(2));
+
+  function parsePoints() {
+    const rows = $('points').value.trim().split(/\n+/);
+    const pts = rows.map((row, i) => {
+      const vals = row.split(',').map(v => Number(v.trim()));
+      if (vals.length !== 2 || vals.some(v => !Number.isFinite(v))) {
+        throw new Error(`Line ${i + 1}: enter two numbers separated by a comma.`);
+      }
+      return vals;
+    });
+    if (!pts.length) throw new Error('Enter at least one input point.');
+    return pts;
+  }
+  function readWeights() {
+    const vals = ['w0x','w0y','w1x','w1y'].map(id => Number($(id).value));
+    if (vals.some(v => !Number.isFinite(v))) throw new Error('Enter valid initial weights.');
+    return [[vals[0], vals[1]], [vals[2], vals[3]]];
+  }
+  function reset(showMessage = true) {
+    try {
+      X = parsePoints();
+      weights = readWeights();
+      wins = [0, 0]; epoch = 0; index = 0; last = null; running = false; logRows = [];
+      $('epochOut').textContent = '0';
+      $('inputOut').textContent = '—';
+      $('winnerOut').textContent = '—';
+      $('log').textContent = 'No training steps yet.';
+      $('status').textContent = showMessage ? 'Reset complete. Ready to train.' : 'Ready to train.';
+      render();
+    } catch (e) {
+      $('status').textContent = e.message;
+    }
+  }
+  function doOne() {
+    if (!X.length) reset(false);
+    if (index >= X.length) { index = 0; epoch++; }
+    const x = X[index];
+    const ds = weights.map(w => Math.hypot(w[0] - x[0], w[1] - x[1]));
+    const winner = ds[0] <= ds[1] ? 0 : 1;
+    const alpha = Number($('alpha').value);
+    const old = weights[winner].slice();
+    weights[winner] = [
+      old[0] + alpha * (x[0] - old[0]),
+      old[1] + alpha * (x[1] - old[1])
+    ];
+    wins[winner]++;
+    last = {x: x.slice(), winner, distances: ds, old, updated: weights[winner].slice()};
+    $('epochOut').textContent = String(epoch + (index === 0 ? 1 : 0));
+    $('inputOut').textContent = `(${x[0]}, ${x[1]})`;
+    $('winnerOut').textContent = `Neuron ${winner + 1}`;
+    $('status').textContent = `Input (${x[0]}, ${x[1]}) is closest to Neuron ${winner + 1}. Its weights moved from (${old.map(v => v.toFixed(2)).join(', ')}) to (${weights[winner].map(v => v.toFixed(2)).join(', ')}).`;
+    logRows.unshift(`<tr><td>${epoch + (index === 0 ? 1 : 0)}</td><td>(${x.join(', ')})</td><td>${winner + 1}</td><td>${ds.map(d => d.toFixed(2)).join(' / ')}</td></tr>`);
+    logRows = logRows.slice(0, 35);
+    $('log').innerHTML = `<table><thead><tr><th>Epoch</th><th>Input</th><th>Winner</th><th>Distances (N1 / N2)</th></tr></thead><tbody>${logRows.join('')}</tbody></table>`;
+    index++;
+    if (index >= X.length) {
+      index = 0;
+      if (epoch >= Number($('epochs').value)) running = false;
+    }
+    render();
+  }
+  function train() {
+    try {
+      if (!X.length || !weights.length) reset(false);
+      const count = Math.max(1, Math.min(50, parseInt($('epochs').value, 10) || 1));
+      $('epochs').value = count;
+      // Start each full training run from the specified initial values.
+      X = parsePoints(); weights = readWeights(); wins = [0, 0]; epoch = 0; index = 0; last = null; logRows = [];
+      $('log').textContent = 'Training in progress…';
+      for (let e = 0; e < count; e++) {
+        for (let j = 0; j < X.length; j++) doOne();
+      }
+      epoch = count; index = 0; running = false;
+      $('epochOut').textContent = String(count);
+      $('status').textContent = `Training complete: ${count} epoch(s), ${X.length * count} input presentations. Only the winning neuron was updated for each input.`;
+      render();
+    } catch (e) {
+      $('status').textContent = e.message;
+    }
+  }
+  function render() {
+    const W = canvas.width, H = canvas.height, pad = 45;
+    ctx.clearRect(0, 0, W, H);
+    const all = X.concat(weights, last ? [last.x] : []);
+    if (!all.length) return;
+    let xmin = Math.min(...all.map(p => p[0])), xmax = Math.max(...all.map(p => p[0]));
+    let ymin = Math.min(...all.map(p => p[1])), ymax = Math.max(...all.map(p => p[1]));
+    if (xmin === xmax) { xmin -= 1; xmax += 1; }
+    if (ymin === ymax) { ymin -= 1; ymax += 1; }
+    const xpad = (xmax - xmin) * .15, ypad = (ymax - ymin) * .15;
+    xmin -= xpad; xmax += xpad; ymin -= ypad; ymax += ypad;
+    const sx = x => pad + (x - xmin) / (xmax - xmin) * (W - 2 * pad);
+    const sy = y => H - pad - (y - ymin) / (ymax - ymin) * (H - 2 * pad);
+    ctx.strokeStyle = '#e6ebf2'; ctx.lineWidth = 1;
+    for (let i = 0; i <= 5; i++) {
+      const xx = pad + i * (W - 2 * pad) / 5;
+      const yy = pad + i * (H - 2 * pad) / 5;
+      ctx.beginPath(); ctx.moveTo(xx, pad); ctx.lineTo(xx, H-pad); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(pad, yy); ctx.lineTo(W-pad, yy); ctx.stroke();
+    }
+    ctx.fillStyle = '#627187'; ctx.font = '12px Arial';
+    ctx.fillText('X', W - pad + 10, H - pad + 4); ctx.fillText('Y', pad - 22, pad - 10);
+    X.forEach((p, i) => {
+      ctx.beginPath(); ctx.arc(sx(p[0]), sy(p[1]), 5, 0, Math.PI*2);
+      ctx.fillStyle = '#2458d3'; ctx.fill();
+      ctx.fillStyle = '#344256'; ctx.font = '12px Arial'; ctx.fillText(`P${i+1}`, sx(p[0])+7, sy(p[1])-7);
+    });
+    if (last) {
+      const w = weights[last.winner];
+      ctx.save(); ctx.setLineDash([6, 5]); ctx.strokeStyle = last.winner === 0 ? '#e05252' : '#15966b';
+      ctx.beginPath(); ctx.moveTo(sx(last.x[0]), sy(last.x[1])); ctx.lineTo(sx(w[0]), sy(w[1])); ctx.stroke(); ctx.restore();
+      ctx.beginPath(); ctx.arc(sx(last.x[0]), sy(last.x[1]), 9, 0, Math.PI*2);
+      ctx.strokeStyle = '#f0a020'; ctx.lineWidth = 2; ctx.stroke();
+    }
+    weights.forEach((w, i) => {
+      const color = i === 0 ? '#e05252' : '#15966b';
+      ctx.beginPath(); ctx.arc(sx(w[0]), sy(w[1]), 9, 0, Math.PI*2); ctx.fillStyle = color; ctx.fill();
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = '#182230'; ctx.font = 'bold 12px Arial'; ctx.fillText(`N${i+1}`, sx(w[0])+12, sy(w[1])+4);
+    });
+    const ds = last ? last.distances.map(d => d.toFixed(2)) : ['—','—'];
+    $('weightsTable').innerHTML = weights.map((w,i) =>
+      `<tr><td>Neuron ${i+1}</td><td>(${w[0].toFixed(2)}, ${w[1].toFixed(2)})</td><td>${ds[i]}</td><td>${wins[i]}</td></tr>`
+    ).join('');
+  }
+  $('train').addEventListener('click', train);
+  $('step').addEventListener('click', () => {
+    if (!X.length || !weights.length) reset(false);
+    if (epoch >= Number($('epochs').value) && index === 0) reset(false);
+    doOne();
+  });
+  $('reset').addEventListener('click', () => reset(true));
+  reset(false);
+})();
+</script>
+</body>
+</html>
